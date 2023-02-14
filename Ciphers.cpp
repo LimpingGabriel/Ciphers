@@ -38,10 +38,19 @@ namespace {
 			dummyTail->prev = dummyHead;
 			size = 0;
 		}
-
+		//Memory management
+		~DLinkedList<T>() {
+			
+			while (size > 0) {
+				remove(0);
+			}
+			delete dummyHead;
+			delete dummyTail;
+		}
 		DNode<T>* head;
 		DNode<T>* tail;
 		int size;
+
 		void addToFront(T elem) {
 			DNode<T>* newNode = new DNode<T>(elem);
 			if (size == 0) {
@@ -88,11 +97,18 @@ namespace {
 		}
 		void remove(int i) {
 			DNode<T>* node = getNode(i);
-			node->prev->next = node->next;
-			node->next->prev = node->prev;
-			
-			head = dummyHead->next;
-			tail = dummyTail->prev;
+			if (size == 1) {
+				dummyHead->next = dummyTail;
+				dummyTail->prev = dummyHead;
+			}
+			else {
+				node->prev->next = node->next;
+				node->next->prev = node->prev;
+
+				head = dummyHead->next;
+				tail = dummyTail->prev;
+			}
+			delete node;
 			size--;
 		}
 		void removeLast() {
@@ -127,45 +143,7 @@ namespace {
 			tail = dummyTail->prev;
 
 		}
-		/*
-		void movePrev(DNode<T>* node) {
-			DNode<T>* prevNode = node->prev;
-			DNode<T>* nextNode = node->next;
 
-			if (prevNode == dummyHead) {
-				//Remove from front
-				head = node->next;
-				head->prev = dummyHead;
-				dummyHead->next = head;
-
-				//Move to back
-				prevNode = tail->prev;
-				nextNode = tail;
-
-				nextNode->prev = node;
-				prevNode->next = node;
-
-				node->next = nextNode;
-				node->prev = prevNode;
-			}
-			
-			else {
-				//Main node
-				node->next = prevNode;
-				node->prev = prevNode->prev;
-
-				//Previous node
-				prevNode->prev->next = node;
-				prevNode->next = nextNode;
-				prevNode->prev = node;
-
-				nextNode->prev = prevNode;
-			}
-			head = dummyHead->next;
-			tail = dummyTail->prev;
-			
-		}
-		*/
 		void moveNext(DNode<T>* node) {
 			DNode<T>* prevNode = node->prev;
 			DNode<T>* nextNode = node->next;
@@ -200,70 +178,55 @@ namespace {
 			tail = dummyTail->prev;
 		}
 
-		//Redo to save memory and not delete references, since that's bad.
+		//Redo to save time, since that's bad.
+		//Should move the whole block at once
 		void tripleCut(DNode<T>* A, DNode<T>* B) {
-			
-			DLinkedList<T> aboveFirst;
-			DLinkedList<T> belowSecond;
 			DNode<T>* node;
 			
-			node = dummyHead->next;
+			DNode<T>* firstAbove;
+			DNode<T>* firstBelow;
+
+			int countA = 0;
+			int countB = 0;
+
+			firstAbove = head;
+			firstBelow = tail;
+
+
+			node = head;
 			while (!(node == A || node == B)) {
-				aboveFirst.addToBack(node->value);
+				countA++;
 				node = node->next;
-				remove(0);
 			}
 
-			node = dummyTail->prev;
+			node = tail;
 			while (!(node == A || node == B)) {
-				belowSecond.addToFront(node->value);
-				node = node->prev;
-				remove(size - 1);
-			}
-
-
-			node = aboveFirst.head;
-			for (int i = 0; i < aboveFirst.size; i++) {
-				addToBack(node->value);
-				node = node->next;
-				
-			}
-
-			node = belowSecond.tail;
-			for (int i = belowSecond.size; i > 0; i--) {
-				addToFront(node->value);
+				countB++;
 				node = node->prev;
 			}
 
-			//Memory management to do
+			DNode<T>* nextNode;
+			for (int i = 0; i < countA; i++) {
+				nextNode = firstAbove->next;
+				moveToBack(firstAbove);
+				firstAbove = nextNode;
+			}
 
+
+			for (int i = 0; i < countB; i++) {
+				nextNode = firstBelow->prev;
+				moveToFront(firstBelow);
+				firstBelow = nextNode;
+			}
 		}
 		void countCut(int i) {
-			//Temporarily remove last so we can add it later
 			DNode<T>* lastCard = tail;
-			removeLast();
-
-			DLinkedList<T> frontCards;
-			
-			//Remove first i cards from main deck and add them to new deck
-			DNode<T>* currentNode = head;
 			for (int j = 0; j < i; j++) {
-				frontCards.addToBack(currentNode->value);
-				currentNode = currentNode->next;
-				remove(0);
-			}
-			
-
-			currentNode = frontCards.head;
-			for (int j = 0; j < frontCards.size; j++) {
-				addToBack(currentNode->value);
-				currentNode = currentNode->next;
+				moveToBack(head);
 			}
 
-			addToBack(lastCard->value);
-			
+			moveToBack(lastCard);
 		}
-		
 		DNode<T>* find(T elem) {
 			DNode<T>* currentNode = head;
 			while (currentNode->value != elem) {
@@ -280,7 +243,6 @@ namespace {
 			}
 			std::cout << std::endl;
 		}
-
 	private:
 		DNode<T>* dummyHead;
 		DNode<T>* getNode(int i) {
@@ -299,8 +261,35 @@ namespace {
 			}
 			return node;
 		}
-	};
+		
+		void moveToBack(DNode<T>* node) {
+			//Heal the old wound
+			node->prev->next = node->next;
+			node->next->prev = node->prev;
 
+			node->prev = tail;
+			node->next = dummyTail;
+
+			tail->next = node;
+			dummyTail->prev = node;
+
+			head = dummyHead->next;
+			tail = dummyTail->prev;
+		}
+		void moveToFront(DNode<T>* node) {
+			node->prev->next = node->next;
+			node->next->prev = node->prev;
+
+			node->prev = dummyHead;
+			node->next = head;
+
+			head->prev = node;
+			dummyHead->next = node;
+
+			head = dummyHead->next;
+			tail = dummyTail->prev;
+		}
+};
 }
 
 namespace ciphers::classic {
@@ -356,31 +345,31 @@ namespace ciphers::modern {
 		}
 
 		
+		DNode<int>* A = cards.find(53);
+		DNode<int>* B = cards.find(54);
+
 
 		//Generate deck from key
 		for (char &c : key) {
-			DNode<int>* A = cards.find(53);
-			DNode<int>* B = cards.find(54);
-
+			//Move A Joker down one
 			cards.moveNext(A);
-
-
+			//Move B Joker down twice
 			cards.moveNext(B);
 			cards.moveNext(B);
-
+			//Triple cut cards
 			cards.tripleCut(A, B);
+
+			//Calculate values to cut by
 			int lastCardValue = cards.tail->value;
-
 			int adjustedLastCard = lastCardValue < 53 ? lastCardValue : 53;
-			cards.countCut(adjustedLastCard);
-
-
 			int keyVal = ((int)c) - 64;
+			//Count cut twice
+			cards.countCut(adjustedLastCard);
 			cards.countCut(keyVal);
-
 		}
 
-		cards.display();
+
+		//cards.display();
 		return "";
 	}
 }
