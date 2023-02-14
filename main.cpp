@@ -29,7 +29,7 @@ int main()
     */
 
     std::string in = "This is a test.";
-    std::string key = "Key";
+    std::string key = "ABRA";
     ciphers::modern::solitaire(in, key, true);
     return 0;
 }

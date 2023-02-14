@@ -63,8 +63,6 @@ namespace {
 				head = newNode;
 			}
 			size++;
-
-			
 		}
 		void addToBack(T elem) {
 			DNode<T>* newNode = new DNode<T>(elem);
@@ -97,6 +95,15 @@ namespace {
 			tail = dummyTail->prev;
 			size--;
 		}
+		void removeLast() {
+			DNode<T>* node = tail;
+			node->prev->next = node->next;
+			node->next->prev = node->prev;
+
+			head = dummyHead->next;
+			tail = dummyTail->prev;
+			size--;
+		}
 
 		void swap(DNode<T>* firstNode, DNode<T>* secondNode) {
 
@@ -120,6 +127,7 @@ namespace {
 			tail = dummyTail->prev;
 
 		}
+		/*
 		void movePrev(DNode<T>* node) {
 			DNode<T>* prevNode = node->prev;
 			DNode<T>* nextNode = node->next;
@@ -140,6 +148,7 @@ namespace {
 				node->next = nextNode;
 				node->prev = prevNode;
 			}
+			
 			else {
 				//Main node
 				node->next = prevNode;
@@ -156,6 +165,7 @@ namespace {
 			tail = dummyTail->prev;
 			
 		}
+		*/
 		void moveNext(DNode<T>* node) {
 			DNode<T>* prevNode = node->prev;
 			DNode<T>* nextNode = node->next;
@@ -175,19 +185,22 @@ namespace {
 				
 			}
 			else {
-				node->prev = nextNode;
-				node->next = nextNode->next;
-
-				nextNode->next->prev = node;
+				DNode<T>* nextNextNode = nextNode->next;
+				prevNode->next = nextNode;
 				nextNode->prev = prevNode;
 				nextNode->next = node;
 
-				prevNode->next = nextNode;
+				node->prev = nextNode;
+				node->next = nextNextNode;
+
+				nextNextNode->prev = node;
+
 			}
 			head = dummyHead->next;
 			tail = dummyTail->prev;
 		}
 
+		//Redo to save memory and not delete references, since that's bad.
 		void tripleCut(DNode<T>* A, DNode<T>* B) {
 			
 			DLinkedList<T> aboveFirst;
@@ -224,6 +237,40 @@ namespace {
 
 			//Memory management to do
 
+		}
+		void countCut(int i) {
+			//Temporarily remove last so we can add it later
+			DNode<T>* lastCard = tail;
+			removeLast();
+
+			DLinkedList<T> frontCards;
+			
+			//Remove first i cards from main deck and add them to new deck
+			DNode<T>* currentNode = head;
+			for (int j = 0; j < i; j++) {
+				frontCards.addToBack(currentNode->value);
+				currentNode = currentNode->next;
+				remove(0);
+			}
+			
+
+			currentNode = frontCards.head;
+			for (int j = 0; j < frontCards.size; j++) {
+				addToBack(currentNode->value);
+				currentNode = currentNode->next;
+			}
+
+			addToBack(lastCard->value);
+			
+		}
+		
+		DNode<T>* find(T elem) {
+			DNode<T>* currentNode = head;
+			while (currentNode->value != elem) {
+				currentNode = currentNode->next;
+			}
+
+			return currentNode;
 		}
 		void display() {
 			DNode<T>* currentNode = dummyHead->next;
@@ -298,24 +345,40 @@ namespace ciphers::classic {
 
 namespace ciphers::modern {
 	std::string solitaire(std::string& inText, std::string& key, bool encode) {
+		upperAlphaString(key);
+
+
+		//Create deck
 		DLinkedList<int> cards;
 
 		for (int i = 1; i < 55; i++) {
 			cards.addToBack(i);
 		}
-		
-		cards.display();
-		
-		DNode<int>* B = cards.tail;
-		DNode<int>* A = cards.tail->prev;
 
-		cards.moveNext(A);
-		cards.moveNext(B);
-		cards.moveNext(B);
 		
-		cards.display();
 
-		cards.tripleCut(A,B);
+		//Generate deck from key
+		for (char &c : key) {
+			DNode<int>* A = cards.find(53);
+			DNode<int>* B = cards.find(54);
+
+			cards.moveNext(A);
+
+
+			cards.moveNext(B);
+			cards.moveNext(B);
+
+			cards.tripleCut(A, B);
+			int lastCardValue = cards.tail->value;
+
+			int adjustedLastCard = lastCardValue < 53 ? lastCardValue : 53;
+			cards.countCut(adjustedLastCard);
+
+
+			int keyVal = ((int)c) - 64;
+			cards.countCut(keyVal);
+
+		}
 
 		cards.display();
 		return "";
