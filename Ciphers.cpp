@@ -6,11 +6,9 @@ namespace {
 			c = toupper(c);
 		}
 	}
-
 	bool upperAlphaPredicate(char& c) {
 		return (int)c < 65 || (int)c > 90;
 	}
-
 	void upperAlphaString(std::string& inString) {
 		upperString(inString);
 		inString.erase(std::remove_if(inString.begin(), inString.end(), upperAlphaPredicate), inString.end());
@@ -243,8 +241,6 @@ namespace {
 			}
 			std::cout << std::endl;
 		}
-	private:
-		DNode<T>* dummyHead;
 		DNode<T>* getNode(int i) {
 			DNode<T>* node;
 			if (i < size / 2) {
@@ -255,12 +251,15 @@ namespace {
 			}
 			else {
 				node = dummyTail->prev;
-				for (int k = 0; k > i; k--) {
+				for (int k = size-1; k > i; k--) {
 					node = node->prev;
 				}
 			}
 			return node;
 		}
+
+	private:
+		DNode<T>* dummyHead;
 		
 		void moveToBack(DNode<T>* node) {
 			//Heal the old wound
@@ -335,7 +334,9 @@ namespace ciphers::classic {
 namespace ciphers::modern {
 	std::string solitaire(std::string& inText, std::string& key, bool encode) {
 		upperAlphaString(key);
-
+		upperAlphaString(inText);
+		std::string outString;
+		outString.reserve(inText.size());
 
 		//Create deck
 		DLinkedList<int> cards;
@@ -367,9 +368,54 @@ namespace ciphers::modern {
 			cards.countCut(adjustedLastCard);
 			cards.countCut(keyVal);
 		}
+		//Generate keystream
+		std::string keyStream;
+		keyStream.reserve(inText.size());
+		for (char& inChar : inText) {
+			int outValue;
+			do {
+				//Move A Joker down one
+				cards.moveNext(A);
+				//Move B Joker down twice
+				cards.moveNext(B);
+				cards.moveNext(B);
+				//Triple cut cards
+				cards.tripleCut(A, B);
+
+				int adjustedLastCard = cards.tail->value < 53 ? cards.tail->value : 53;
+				//Count cut 
+				cards.countCut(adjustedLastCard);
+
+				
+				int topValue = cards.head->value < 53 ? cards.head->value : 53;
+				outValue = cards.getNode(topValue)->value;
+
+			} while (outValue == 53);
+
+			if (outValue > 26) {
+				outValue -= 26;
+			}
+
+			int inCharVal = ((int)inChar) - 64;
+			int outChar;
+			if (encode) {
+				outChar = (inCharVal + outValue);
+				if (outChar > 26) {
+					outChar -= 26;
+				}
+			}
+			else {
+				outChar = (inCharVal - outValue);
+				if (outChar < 0) {
+					outChar += 26;
+				}
+			}
 
 
-		//cards.display();
-		return "";
+			outChar += 64;
+			outString += (char)outChar;
+
+		}
+		return outString;
 	}
 }

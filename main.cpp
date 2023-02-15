@@ -20,24 +20,38 @@ std::string gen_random(const int len) {
 
 int main()
 {
+    std::string in;
+    std::string key;
+    std::string encodeString;
+    
+    while (true) {
+        std::cout << "Enter message: ";
+        std::getline(std::cin, in);
+        std::cout << "Enter key: ";
+        std::getline(std::cin, key);
+        std::cout << "Encode? (y/n) ";
+        std::getline(std::cin, encodeString);
+        
+        bool encode = (encodeString == "Y" || encodeString == "y");
+        std::cout << "Ciphertext: " << std::endl;
+        std::cout << ciphers::modern::solitaire(in, key, encode) << std::endl;
+    }
+    return 0;
+    
+
     /*
-    std::string in = gen_random(10000000);
+    //Benchmark: 9648758800[ns]
+    std::string in = gen_random(1000);
+    std::string key = gen_random(52);
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-    ciphers::classic::caesar(in, 1, true);
+
+    for (int i = 0; i < 10000; i++) {
+        ciphers::modern::solitaire(in, key, true);
+    }
 
     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
     std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::nanoseconds> (end - begin).count() << "[ns]" << std::endl;
+
     return 0;
     */
-
-    std::string in = "This is a test.";
-    std::string key;
-    while (true) {
-        
-        //std::cout << "Enter key: ";
-        //std::getline(std::cin, key);
-        key = "Test";
-        ciphers::modern::solitaire(in, key, true);
-    }
-    return 0;
 }
