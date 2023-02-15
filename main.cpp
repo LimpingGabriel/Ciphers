@@ -42,6 +42,7 @@ int main()
 
     
     //Benchmark: 2251340300[ns] Release x64, 1000 char instring, 52 char key, 10000 iterations
+    //Fast mod, preincrement: 21423867200[ns] Release x64, 1000 character instring, 52 char key, 100000 iterations
     std::string in = gen_random(1000);
     std::string key = gen_random(52);
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();

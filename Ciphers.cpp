@@ -69,7 +69,7 @@ namespace {
 
 				head = newNode;
 			}
-			size++;
+			++size;
 		}
 		void addToBack(T elem) {
 			DNode<T>* newNode = new DNode<T>(elem);
@@ -91,7 +91,7 @@ namespace {
 				tail = newNode;
 			}
 
-			size++;
+			++size;
 		}
 		void remove(int i) {
 			DNode<T>* node = getNode(i);
@@ -107,7 +107,7 @@ namespace {
 				tail = dummyTail->prev;
 			}
 			delete node;
-			size--;
+			--size;
 		}
 		void removeLast() {
 			DNode<T>* node = tail;
@@ -116,7 +116,7 @@ namespace {
 
 			head = dummyHead->next;
 			tail = dummyTail->prev;
-			size--;
+			--size;
 		}
 
 		void swap(DNode<T>* firstNode, DNode<T>* secondNode) {
@@ -193,25 +193,25 @@ namespace {
 
 			node = head;
 			while (!(node == A || node == B)) {
-				countA++;
+				++countA;
 				node = node->next;
 			}
 
 			node = tail;
 			while (!(node == A || node == B)) {
-				countB++;
+				++countB;
 				node = node->prev;
 			}
 
 			DNode<T>* nextNode;
-			for (int i = 0; i < countA; i++) {
+			for (int i = 0; i < countA; ++i) {
 				nextNode = firstAbove->next;
 				moveToBack(firstAbove);
 				firstAbove = nextNode;
 			}
 
 
-			for (int i = 0; i < countB; i++) {
+			for (int i = 0; i < countB; ++i) {
 				nextNode = firstBelow->prev;
 				moveToFront(firstBelow);
 				firstBelow = nextNode;
@@ -219,7 +219,7 @@ namespace {
 		}
 		void countCut(int i) {
 			DNode<T>* lastCard = tail;
-			for (int j = 0; j < i; j++) {
+			for (int j = 0; j < i; ++j) {
 				moveToBack(head);
 			}
 
@@ -245,13 +245,13 @@ namespace {
 			DNode<T>* node;
 			if (i < size / 2) {
 				node = dummyHead->next;
-				for (int k = 0; k < i; k++) {
+				for (int k = 0; k < i; ++k) {
 					node = node->next;
 				}
 			}
 			else {
 				node = dummyTail->prev;
-				for (int k = size - 1; k > i; k--) {
+				for (int k = size - 1; k > i; --k) {
 					node = node->prev;
 				}
 			}
@@ -370,7 +370,7 @@ namespace ciphers::modern {
 		//Create deck
 		DLinkedList<int> cards;
 
-		for (int i = 1; i < 55; i++) {
+		for (int i = 1; i < 55; ++i) {
 			cards.addToBack(i);
 		}
 
