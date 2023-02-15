@@ -38,7 +38,7 @@ namespace {
 		}
 		//Memory management
 		~DLinkedList<T>() {
-			
+
 			while (size > 0) {
 				remove(0);
 			}
@@ -64,7 +64,7 @@ namespace {
 				newNode->next = head;
 
 				head->prev = newNode;
-				
+
 				dummyHead->next = newNode;
 
 				head = newNode;
@@ -87,7 +87,7 @@ namespace {
 
 				newNode->next = dummyTail;
 				dummyTail->prev = newNode;
-				
+
 				tail = newNode;
 			}
 
@@ -158,7 +158,7 @@ namespace {
 
 				node->next = nextNode;
 				node->prev = prevNode;
-				
+
 			}
 			else {
 				DNode<T>* nextNextNode = nextNode->next;
@@ -180,7 +180,7 @@ namespace {
 		//Should move the whole block at once
 		void tripleCut(DNode<T>* A, DNode<T>* B) {
 			DNode<T>* node;
-			
+
 			DNode<T>* firstAbove;
 			DNode<T>* firstBelow;
 
@@ -251,7 +251,7 @@ namespace {
 			}
 			else {
 				node = dummyTail->prev;
-				for (int k = size-1; k > i; k--) {
+				for (int k = size - 1; k > i; k--) {
 					node = node->prev;
 				}
 			}
@@ -260,7 +260,7 @@ namespace {
 
 	private:
 		DNode<T>* dummyHead;
-		
+
 		void moveToBack(DNode<T>* node) {
 			//Heal the old wound
 			node->prev->next = node->next;
@@ -288,8 +288,37 @@ namespace {
 			head = dummyHead->next;
 			tail = dummyTail->prev;
 		}
+	};
+
+	void generateDeckFromPassphrase(std::string& key, DLinkedList<int>& cards, DNode<int>*& A, DNode<int>*& B) {
+		//Generate deck from key
+		for (char& c : key) {
+			//Move A Joker down one
+			cards.moveNext(A);
+			//Move B Joker down twice
+
+
+			//---------COULD BE FASTER WITH A SPECIFIC FUNCTION------------
+			cards.moveNext(B);
+			cards.moveNext(B);
+			//Triple cut cards
+			cards.tripleCut(A, B);
+
+			//Calculate values to cut by
+			int lastCardValue = cards.tail->value;
+			int adjustedLastCard = lastCardValue < 53 ? lastCardValue : 53;
+			int keyVal = ((int)c) - 64;
+			//Count cut twice
+			cards.countCut(adjustedLastCard);
+			cards.countCut(keyVal);
+		}
+	}
+
+	//Faster modulo - only used when needed
+	int modulo(int in, int limit) {
+		return in < limit ? in : in % limit;
+	}
 };
-}
 
 namespace ciphers::classic {
 	std::string caesar(std::string& inText, int shift, bool encode) {
@@ -345,29 +374,11 @@ namespace ciphers::modern {
 			cards.addToBack(i);
 		}
 
-		
 		DNode<int>* A = cards.find(53);
 		DNode<int>* B = cards.find(54);
-
-
-		//Generate deck from key
-		for (char &c : key) {
-			//Move A Joker down one
-			cards.moveNext(A);
-			//Move B Joker down twice
-			cards.moveNext(B);
-			cards.moveNext(B);
-			//Triple cut cards
-			cards.tripleCut(A, B);
-
-			//Calculate values to cut by
-			int lastCardValue = cards.tail->value;
-			int adjustedLastCard = lastCardValue < 53 ? lastCardValue : 53;
-			int keyVal = ((int)c) - 64;
-			//Count cut twice
-			cards.countCut(adjustedLastCard);
-			cards.countCut(keyVal);
-		}
+		generateDeckFromPassphrase(key, cards, A, B);
+		
+		
 		//Generate keystream
 		std::string keyStream;
 		keyStream.reserve(inText.size());
@@ -392,23 +403,15 @@ namespace ciphers::modern {
 
 			} while (outValue == 53);
 
-			if (outValue > 26) {
-				outValue -= 26;
-			}
+			outValue = modulo(outValue - 1, 26) + 1;
 
 			int inCharVal = ((int)inChar) - 64;
 			int outChar;
 			if (encode) {
-				outChar = (inCharVal + outValue);
-				if (outChar > 26) {
-					outChar -= 26;
-				}
+				outChar = modulo((inCharVal + outValue) - 1, 26) + 1;
 			}
 			else {
-				outChar = (inCharVal - outValue);
-				if (outChar < 0) {
-					outChar += 26;
-				}
+				outChar = modulo((inCharVal - outValue) + 25, 26) + 1;
 			}
 
 

@@ -20,6 +20,7 @@ std::string gen_random(const int len) {
 
 int main()
 {
+    /*
     std::string in;
     std::string key;
     std::string encodeString;
@@ -37,15 +38,15 @@ int main()
         std::cout << ciphers::modern::solitaire(in, key, encode) << std::endl;
     }
     return 0;
-    
+    */
 
-    /*
-    //Benchmark: 9648758800[ns]
+    
+    //Benchmark: 2251340300[ns] Release x64, 1000 char instring, 52 char key, 10000 iterations
     std::string in = gen_random(1000);
     std::string key = gen_random(52);
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 
-    for (int i = 0; i < 10000; i++) {
+    for (int i = 0; i < 100000; i++) {
         ciphers::modern::solitaire(in, key, true);
     }
 
@@ -53,5 +54,6 @@ int main()
     std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::nanoseconds> (end - begin).count() << "[ns]" << std::endl;
 
     return 0;
-    */
+    
+    
 }
