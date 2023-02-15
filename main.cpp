@@ -39,10 +39,13 @@ int main()
     }
     return 0;
     */
+    
 
     
-    //Benchmark: 2251340300[ns] Release x64, 1000 char instring, 52 char key, 10000 iterations
+    //Benchmark: 22513403000[ns] Release x64, 1000 char instring, 52 char key, 100000 iterations
     //Fast mod, preincrement: 21423867200[ns] Release x64, 1000 character instring, 52 char key, 100000 iterations
+    //Fast countcut, 16829706200[ns] Release x64 1000 character instring, 52 char key, 100000 iterations
+    //Reorganized tripleCut, 5896591500[ns] Release x64 1000 character instring, 52 char key, 100000 iterations
     std::string in = gen_random(1000);
     std::string key = gen_random(52);
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
@@ -55,6 +58,7 @@ int main()
     std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::nanoseconds> (end - begin).count() << "[ns]" << std::endl;
 
     return 0;
+    
     
     
 }

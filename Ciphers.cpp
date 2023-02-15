@@ -179,6 +179,67 @@ namespace {
 		//Redo to save time, since that's bad.
 		//Should move the whole block at once
 		void tripleCut(DNode<T>* A, DNode<T>* B) {
+			//ALL of this pointer math can be reduced and optimized still.
+
+			//Find the top and bottom nodes
+			DNode<T>* topNode = head;
+			while (topNode != A && topNode != B) {
+				topNode = topNode->next;
+			}
+			DNode<T>* bottomNode = (topNode == A) ? B : A;
+
+			//Now swap the cards
+
+			//If the joker is at the very top, do not swap
+			bool doTopSwap = (topNode->prev == dummyHead) ? false : true;
+			bool doBottomSwap = (bottomNode->next == dummyTail) ? false : true;
+
+			DNode<T>* topFirst = head;
+			DNode<T>* topLast = head;
+			DNode<T>* bottomFirst = head;
+			DNode<T>* bottomLast = head;
+			//Get first and last cards of each swap group
+			if (doTopSwap) {
+				//Set start and end
+				topFirst = head;
+				topLast = topNode->prev;
+				//Heal the old wound
+				dummyHead->next = topNode;
+				topNode->prev = dummyHead;
+			}
+			if (doBottomSwap) {
+				bottomFirst = bottomNode->next;
+				bottomLast = tail;
+				//Heal up the old wound
+				dummyTail->prev = bottomNode;
+				bottomNode->next = dummyTail;
+			}
+
+			//At this point, the sets of cards have been cut out of the deck. Now we add back in.
+
+			if (doTopSwap) {
+				//Left side
+				bottomNode->next = topFirst;
+				topFirst->prev = bottomNode;
+
+				//Right side
+				topLast->next = dummyTail;
+				dummyTail->prev = topLast;
+			}
+
+			if (doBottomSwap) {
+				//Left side
+				dummyHead->next = bottomFirst;
+				bottomFirst->prev = dummyHead;
+
+				//right side
+				topNode->prev = bottomLast;
+				bottomLast->next = topNode;
+			}
+			head = dummyHead->next;
+			tail = dummyTail->prev;
+
+			/*
 			DNode<T>* node;
 
 			DNode<T>* firstAbove;
@@ -216,14 +277,41 @@ namespace {
 				moveToFront(firstBelow);
 				firstBelow = nextNode;
 			}
+			*/
 		}
 		void countCut(int i) {
+			if (i != 0) {
+				//Find the first and last node
+				DNode<T>* firstNode = head;
+				DNode<T>* lastNode = dummyHead;
+				for (int j = 0; j < i; ++j) {
+					lastNode = lastNode->next;
+				}
+
+				//Reassign whole block using just first and last node
+				//Heal old wound
+				dummyHead->next = lastNode->next;
+				lastNode->next->prev = dummyHead;
+
+				//Set first and last node values again
+				firstNode->prev = tail->prev;
+				lastNode->next = tail;
+				//Splice in
+				tail->prev->next = firstNode;
+				tail->prev = lastNode;
+
+				head = dummyHead->next;
+				tail = dummyTail->prev;
+			}
+			/*
 			DNode<T>* lastCard = tail;
 			for (int j = 0; j < i; ++j) {
 				moveToBack(head);
 			}
-
 			moveToBack(lastCard);
+			*/
+
+
 		}
 		DNode<T>* find(T elem) {
 			DNode<T>* currentNode = head;
