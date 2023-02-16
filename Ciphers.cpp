@@ -28,7 +28,6 @@ namespace {
 	template <typename T>
 	struct DLinkedList {
 	public:
-		DNode<T>* dummyTail;
 		DLinkedList<T>() {
 			dummyHead = new DNode<T>();
 			dummyTail = new DNode<T>();
@@ -176,12 +175,7 @@ namespace {
 			tail = dummyTail->prev;
 		}
 
-		//Redo to save time, since that's bad.
-		//Should move the whole block at once
 		void tripleCut(DNode<T>* A, DNode<T>* B) {
-			//ALL of this pointer math can be reduced and optimized still.
-
-			//Find the top and bottom nodes
 			DNode<T>* topNode = head;
 			while (topNode != A && topNode != B) {
 				topNode = topNode->next;
@@ -194,90 +188,64 @@ namespace {
 			bool doTopSwap = (topNode->prev == dummyHead) ? false : true;
 			bool doBottomSwap = (bottomNode->next == dummyTail) ? false : true;
 
-			DNode<T>* topFirst = head;
-			DNode<T>* topLast = head;
-			DNode<T>* bottomFirst = head;
-			DNode<T>* bottomLast = head;
-			//Get first and last cards of each swap group
-			if (doTopSwap) {
-				//Set start and end
-				topFirst = head;
-				topLast = topNode->prev;
-				//Heal the old wound
-				dummyHead->next = topNode;
-				topNode->prev = dummyHead;
-			}
-			if (doBottomSwap) {
-				bottomFirst = bottomNode->next;
-				bottomLast = tail;
-				//Heal up the old wound
-				dummyTail->prev = bottomNode;
-				bottomNode->next = dummyTail;
-			}
+			if (doTopSwap && doBottomSwap) {
+				DNode<T>* topFirst = head;
+				DNode<T>* topLast = topNode->prev;
+				DNode<T>* bottomFirst = bottomNode->next;
+				DNode<T>* bottomLast = tail;
 
-			//At this point, the sets of cards have been cut out of the deck. Now we add back in.
-
-			if (doTopSwap) {
-				//Left side
-				bottomNode->next = topFirst;
-				topFirst->prev = bottomNode;
-
-				//Right side
-				topLast->next = dummyTail;
-				dummyTail->prev = topLast;
-			}
-
-			if (doBottomSwap) {
-				//Left side
+				//First link
 				dummyHead->next = bottomFirst;
 				bottomFirst->prev = dummyHead;
 
-				//right side
-				topNode->prev = bottomLast;
+				//Second link
 				bottomLast->next = topNode;
+				topNode->prev = bottomLast;
+
+				//Third link
+				topFirst->prev = bottomNode;
+				bottomNode->next = topFirst;
+
+				//Fourth link
+				dummyTail->prev = topLast;
+				topLast->next = dummyTail;
+			}
+			
+			else if (doTopSwap) {
+				DNode<T>* topFirst = head;
+				DNode<T>* topLast = topNode->prev;
+
+				//Third link
+				topFirst->prev = bottomNode;
+				bottomNode->next = topFirst;
+
+				//Fourth link
+				dummyTail->prev = topLast;
+				topLast->next = dummyTail;
+
+				dummyHead->next = topNode;
+				topNode->prev = dummyHead;
+			}
+			
+			else if (doBottomSwap) {
+				DNode<T>* bottomFirst = bottomNode->next;
+				DNode<T>* bottomLast = tail;
+
+				//First link
+				dummyHead->next = bottomFirst;
+				bottomFirst->prev = dummyHead;
+
+				//Second link
+				bottomLast->next = topNode;
+				topNode->prev = bottomLast;
+
+				dummyTail->prev = bottomNode;
+				bottomNode->next = dummyTail;
+
 			}
 			head = dummyHead->next;
 			tail = dummyTail->prev;
-
-			/*
-			DNode<T>* node;
-
-			DNode<T>* firstAbove;
-			DNode<T>* firstBelow;
-
-			int countA = 0;
-			int countB = 0;
-
-			firstAbove = head;
-			firstBelow = tail;
-
-
-			node = head;
-			while (!(node == A || node == B)) {
-				++countA;
-				node = node->next;
-			}
-
-			node = tail;
-			while (!(node == A || node == B)) {
-				++countB;
-				node = node->prev;
-			}
-
-			DNode<T>* nextNode;
-			for (int i = 0; i < countA; ++i) {
-				nextNode = firstAbove->next;
-				moveToBack(firstAbove);
-				firstAbove = nextNode;
-			}
-
-
-			for (int i = 0; i < countB; ++i) {
-				nextNode = firstBelow->prev;
-				moveToFront(firstBelow);
-				firstBelow = nextNode;
-			}
-			*/
+			
 		}
 		void countCut(int i) {
 			if (i != 0) {
@@ -348,6 +316,7 @@ namespace {
 
 	private:
 		DNode<T>* dummyHead;
+		DNode<T>* dummyTail;
 
 		void moveToBack(DNode<T>* node) {
 			//Heal the old wound
@@ -378,23 +347,26 @@ namespace {
 		}
 	};
 
+	void moveTriple(DLinkedList<int>& cards, DNode<int>*& A, DNode<int>*& B) {
+		//Move A Joker down one
+		cards.moveNext(A);
+		//Move B Joker down twice
+
+
+		//---------COULD BE FASTER WITH A SPECIFIC FUNCTION (maybe)------------
+		cards.moveNext(B);
+		cards.moveNext(B);
+		//---------------------------------------------
+		//Triple cut cards
+		cards.tripleCut(A, B);
+
+	}
 	void generateDeckFromPassphrase(std::string& key, DLinkedList<int>& cards, DNode<int>*& A, DNode<int>*& B) {
 		//Generate deck from key
 		for (char& c : key) {
-			//Move A Joker down one
-			cards.moveNext(A);
-			//Move B Joker down twice
-
-
-			//---------COULD BE FASTER WITH A SPECIFIC FUNCTION------------
-			cards.moveNext(B);
-			cards.moveNext(B);
-			//Triple cut cards
-			cards.tripleCut(A, B);
-
+			moveTriple(cards, A, B);
 			//Calculate values to cut by
-			int lastCardValue = cards.tail->value;
-			int adjustedLastCard = lastCardValue < 53 ? lastCardValue : 53;
+			int adjustedLastCard = cards.tail->value < 53 ? cards.tail->value : 53;
 			int keyVal = ((int)c) - 64;
 			//Count cut twice
 			cards.countCut(adjustedLastCard);
@@ -446,6 +418,9 @@ namespace ciphers::classic {
 		}
 		return outString;
 	}
+	std::string rot13(std::string& inText) {
+		return ciphers::classic::caesar(inText, 13, true);
+	}
 }
 
 namespace ciphers::modern {
@@ -462,8 +437,9 @@ namespace ciphers::modern {
 			cards.addToBack(i);
 		}
 
-		DNode<int>* A = cards.find(53);
-		DNode<int>* B = cards.find(54);
+		DNode<int>* A = cards.tail->prev;
+		DNode<int>* B = cards.tail;
+
 		generateDeckFromPassphrase(key, cards, A, B);
 		
 		
@@ -473,16 +449,9 @@ namespace ciphers::modern {
 		for (char& inChar : inText) {
 			int outValue;
 			do {
-				//Move A Joker down one
-				cards.moveNext(A);
-				//Move B Joker down twice
-				cards.moveNext(B);
-				cards.moveNext(B);
-				//Triple cut cards
-				cards.tripleCut(A, B);
+				moveTriple(cards, A, B);
 
 				int adjustedLastCard = cards.tail->value < 53 ? cards.tail->value : 53;
-				//Count cut 
 				cards.countCut(adjustedLastCard);
 
 				
@@ -509,4 +478,5 @@ namespace ciphers::modern {
 		}
 		return outString;
 	}
+
 }
